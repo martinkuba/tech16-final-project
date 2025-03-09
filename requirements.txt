@@ -1,2 +1,4 @@
 openai
 python-frontmatter
+llama-index
+llama-index-vector-stores-chroma
