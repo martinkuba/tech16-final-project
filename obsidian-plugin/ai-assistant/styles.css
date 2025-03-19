@@ -21,6 +21,7 @@ If your plugin does not need CSS, delete this file.
   border-radius: 5px;
   max-width: 80%;
   word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .user {
@@ -92,4 +93,40 @@ If your plugin does not need CSS, delete this file.
 
 .chat-input-container button:hover {
   background-color: var(--interactive-accent-hover);
-} */
+}
+
+/* Styling for sources */
+.sources-container {
+  margin-top: 5px;
+  margin-bottom: 15px;
+  padding: 8px;
+  border-radius: 5px;
+  background-color: var(--background-secondary);
+  font-size: 0.9em;
+  align-self: flex-start;
+  max-width: 80%;
+}
+
+.sources-title {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: var(--text-muted);
+}
+
+.sources-list {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.sources-list li {
+  margin-bottom: 3px;
+}
+
+.sources-list a {
+  color: var(--text-accent);
+  text-decoration: none;
+}
+
+.sources-list a:hover {
+  text-decoration: underline;
+}

@@ -76,6 +76,7 @@ class ChatView extends ItemView {
 
     // Create user message and append to chat
     const userMessageEl = createEl("div", { cls: "chat-message user", text: `${prompt}` });
+    userMessageEl.style.whiteSpace = "pre-wrap"; // Preserve line breaks and whitespace
     this.chatListEl.appendChild(userMessageEl);
     this.inputEl.value = "";
 
@@ -109,7 +110,29 @@ class ChatView extends ItemView {
             } else {
               // Append the response message to the chat list
               const responseEl = createEl("div", { cls: "chat-message response", text: `${data.response}` });
+              responseEl.style.whiteSpace = "pre-wrap"; // Preserve line breaks and whitespace
               this.chatListEl.appendChild(responseEl);
+              
+              // If sources are available (for RAG responses), display them
+              if (data.sources && data.sources.length > 0) {
+                const sourcesContainer = createEl("div", { cls: "sources-container" });
+                const sourcesTitle = createEl("div", { cls: "sources-title", text: "Sources:" });
+                sourcesContainer.appendChild(sourcesTitle);
+                
+                const sourcesList = createEl("ul", { cls: "sources-list" });
+                data.sources.forEach((source: string) => {
+                  const sourceItem = sourcesList.createEl("li");
+                  const sourceLink = sourceItem.createEl("a", { text: source, href: "#" });
+                  
+                  sourceLink.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    this.app.workspace.openLinkText(source, "", false);
+                  });
+                });
+                
+                sourcesContainer.appendChild(sourcesList);
+                this.chatListEl.appendChild(sourcesContainer);
+              }
             }
         } else {
             const errorEl = createEl("div", { cls: "chat-message error", text: "Error: " + response.statusText });
