@@ -60,8 +60,6 @@ class Chatbot:
         query_engine = index.as_query_engine()
         response = query_engine.query(query)
 
-        print(vars(response))
-        
         # Extract source nodes if available
         sources = []
         if hasattr(response, 'source_nodes'):
@@ -75,83 +73,9 @@ class Chatbot:
             "sources": sources
         }
 
-    def preprocess_time_query(self, query):
-        """
-        Identify time expressions in queries and return information about the time period.
-        This helps with filtering documents by date in the retrieval process.
-        """
-        # Current date information for relative time references
-        now = datetime.now()
-        current_month = now.month
-        current_year = now.year
-        
-        # Initialize time filter metadata
-        time_filter = None
-        
-        # Check for time-related terms
-        if any(term in query.lower() for term in ["this month", "current month"]):
-            time_filter = {
-                "filter_type": "month",
-                "month": current_month,
-                "year": current_year,
-                "original_query": query,
-                "description": f"month {current_month} of {current_year}"
-            }
-        elif "last month" in query.lower():
-            last_month = 12 if current_month == 1 else current_month - 1
-            last_month_year = current_year - 1 if current_month == 1 else current_year
-            time_filter = {
-                "filter_type": "month",
-                "month": last_month,
-                "year": last_month_year,
-                "original_query": query,
-                "description": f"month {last_month} of {last_month_year}"
-            }
-        elif "this year" in query.lower():
-            time_filter = {
-                "filter_type": "year",
-                "year": current_year,
-                "original_query": query,
-                "description": f"year {current_year}"
-            }
-        elif any(month_name.lower() in query.lower() for month_name in [
-            "january", "february", "march", "april", "may", "june", 
-            "july", "august", "september", "october", "november", "december"
-        ]):
-            # Map month names to numbers
-            month_map = {
-                "january": 1, "february": 2, "march": 3, "april": 4, 
-                "may": 5, "june": 6, "july": 7, "august": 8, 
-                "september": 9, "october": 10, "november": 11, "december": 12
-            }
-            
-            # Find which month name is in the query
-            for month_name, month_num in month_map.items():
-                if month_name.lower() in query.lower():
-                    time_filter = {
-                        "filter_type": "month",
-                        "month": month_num,
-                        "year": current_year,  # Default to current year
-                        "original_query": query,
-                        "description": f"month {month_name} ({month_num}) of {current_year}"
-                    }
-                    break
-        
-        return time_filter
-
     def ask_with_rag(self, query: str):
         """Process the query using RAG and return the chatbot's response and source documents."""
-        # Extract time filter information from the query
-        time_filter = self.preprocess_time_query(query)
-        
-        # Retrieve documents with potential filtering based on time
-        if time_filter:
-            # Apply metadata filters for date-specific queries
-            retrieved_docs = self.retrieve_with_date_filter(time_filter)
-            print(f"Applied time filter for {time_filter['description']}, found {len(retrieved_docs)} docs")
-        else:
-            # Use standard retrieval for non-date queries
-            retrieved_docs = self.query_engine.retrieve(query)
+        retrieved_docs = self.query_engine.retrieve(query)
         
         if not retrieved_docs:
             return {
@@ -179,60 +103,14 @@ class Chatbot:
             "response": response_text,
             "sources": sources
         }
-    
-    def retrieve_with_date_filter(self, time_filter):
-        """
-        Retrieve documents from the vector store with date filtering.
-        This ensures we only get documents from the specified time period.
-        """
-        # Get all nodes from the index
-        all_nodes = self.index.docstore.docs.values()
-        
-        # Filter nodes based on time filter
-        filtered_nodes = []
-        
-        for node in all_nodes:
-            metadata = node.metadata
-            
-            # Check if this is a date-tagged document
-            if 'year' in metadata and 'month' in metadata:
-                # Filter by year only
-                if time_filter['filter_type'] == 'year' and metadata['year'] == time_filter['year']:
-                    filtered_nodes.append(node)
-                
-                # Filter by month and year
-                elif (time_filter['filter_type'] == 'month' and 
-                      metadata['month'] == time_filter['month'] and 
-                      metadata['year'] == time_filter['year']):
-                    filtered_nodes.append(node)
-        
-        # If we found date-filtered documents, return them
-        if filtered_nodes:
-            # Convert nodes back to retrieval format
-            from llama_index.core.schema import NodeWithScore
-            return [NodeWithScore(node=node, score=1.0) for node in filtered_nodes[:10]]
-        
-        # Fall back to semantic search if no date-filtered docs found
-        query = time_filter['original_query']
-        print(f"No exact date matches found, falling back to semantic search for: {query}")
-        return self.query_engine.retrieve(query)
 
     def find_rag_document(self, query: str) -> list:
         """
         Process a query and return relevant document paths.
         Uses date filtering if the query contains time expressions.
         """
-        # Extract time filter information from the query
-        time_filter = self.preprocess_time_query(query)
-        
-        # Retrieve documents with potential filtering based on time
-        if time_filter:
-            # Apply metadata filters for date-specific queries
-            retrieved_docs = self.retrieve_with_date_filter(time_filter)
-            print(f"Applied time filter for {time_filter['description']}, found {len(retrieved_docs)} docs")
-        else:
-            # Use standard retrieval for non-date queries
-            retrieved_docs = self.query_engine.retrieve(query)
+
+        retrieved_docs = self.query_engine.retrieve(query)
         
         print(len(retrieved_docs))
         
@@ -247,10 +125,4 @@ class Chatbot:
                 if 'file_path' in doc.metadata:
                     paths.append(os.path.relpath(doc.metadata.get('file_path'), base_dir_abs))
 
-        print(paths)
         return paths
-
-
-
-# Create a chatbot instance for Flask to use
-# chatbot = Chatbot(load_documents=True)
