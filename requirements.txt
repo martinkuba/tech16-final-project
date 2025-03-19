@@ -5,3 +5,4 @@ llama-index-vector-stores-chroma
 llama-index-agent-openai
 flask
 flask-cors
+requests
