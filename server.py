@@ -5,7 +5,7 @@ from chatbot import Chatbot
 app = Flask(__name__)
 CORS(app)  # This will allow all domains by default
 
-chatbot = Chatbot(load_documents=False)
+chatbot = Chatbot()
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -16,18 +16,18 @@ def chat():
     request_type = data.get('type', '')
     context = data.get('context', '')
 
-    print(prompt)
-    print(request_type)
-    print(context)
+    # print(prompt)
+    # print(request_type)
+    # print(context)
 
     if request_type == 'current-note':
         print("Asking LLM using a single-file context")
         response = chatbot.ask_with_context(prompt, context)
-        return jsonify({'response': response.text})
+        return jsonify({'response': response['response'], 'sources': response['sources']})
     elif request_type == 'all-notes':
         print("Asking LLM using RAG context")
         response = chatbot.ask_with_rag(prompt)
-        return jsonify({'response': response.text})
+        return jsonify({'response': response['response'], 'sources': response['sources']})
     elif request_type == 'find-files':
         print("Search for documents using RAG")
         response = chatbot.find_rag_document(prompt)
