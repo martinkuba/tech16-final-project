@@ -11,11 +11,15 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# VAULT_PATH = "./test_data/Obsidian Main Copy"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+# VAULT_PATH = os.path.join(script_dir, "../test_data/Obsidian Main Copy")
 # COLLECTION_NAME = "Obsidian Main Copy"
 
-VAULT_PATH = "./test_data/obsidian"
+VAULT_PATH = os.path.join(script_dir, "../test_data/obsidian")
 COLLECTION_NAME = "obsidian"
+LLM_MODEL = "gpt-4-turbo"
+# LLM_MODEL = "gpt-3.5-turbo"
 
 base_dir_abs = os.path.abspath(VAULT_PATH)
 
@@ -35,8 +39,7 @@ class Chatbot:
         Settings.embed_model = OpenAIEmbedding(model="text-embedding-ada-002")
         
         # Set up LLM
-        # Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.7)
-        Settings.llm = OpenAI(model="gpt-4-turbo", temperature=0.7)
+        Settings.llm = OpenAI(model=LLM_MODEL, temperature=0.5)
 
         # Create Vector index with or without loading documents
         print("opening vector store")
