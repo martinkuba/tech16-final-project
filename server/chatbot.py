@@ -93,15 +93,15 @@ class Chatbot:
         # Extract the string content from the CompletionResponse object
         response_text = str(response_obj)
         
-        # Extract source document paths
-        sources = []
+        # Use a set to eliminate duplicate document paths
+        unique_sources = set()
         for doc in retrieved_docs:
             if 'file_path' in doc.metadata:
-                sources.append(os.path.relpath(doc.metadata.get('file_path'), base_dir_abs))
+                unique_sources.add(os.path.relpath(doc.metadata.get('file_path'), base_dir_abs))
         
         return {
             "response": response_text,
-            "sources": sources
+            "sources": list(unique_sources)
         }
 
     def find_rag_document(self, query: str) -> list:
@@ -109,20 +109,22 @@ class Chatbot:
         Process a query and return relevant document paths.
         Uses date filtering if the query contains time expressions.
         """
-
         retrieved_docs = self.query_engine.retrieve(query)
         
-        print(len(retrieved_docs))
+        print(f"Retrieved {len(retrieved_docs)} document chunks")
         
-        paths = []
+        # Use a set to eliminate duplicates
+        unique_paths = set()
+        
         for doc in retrieved_docs:
             if hasattr(doc, 'node'):
                 # For NodeWithScore objects
                 if 'file_path' in doc.node.metadata:
-                    paths.append(os.path.relpath(doc.node.metadata.get('file_path'), base_dir_abs))
+                    unique_paths.add(os.path.relpath(doc.node.metadata.get('file_path'), base_dir_abs))
             else:
                 # For other types of nodes
                 if 'file_path' in doc.metadata:
-                    paths.append(os.path.relpath(doc.metadata.get('file_path'), base_dir_abs))
+                    unique_paths.add(os.path.relpath(doc.metadata.get('file_path'), base_dir_abs))
 
-        return paths
+        print(f"Found {len(unique_paths)} unique documents")
+        return list(unique_paths)
